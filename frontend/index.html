@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Estimador de propensión | Bank Marketing</title>
+    <style>
+      :root {
+        --ink: #172033;
+        --muted: #6d778c;
+        --line: #dbe2ec;
+        --surface: #ffffff;
+        --page: #f5f7fb;
+        --accent: #176b59;
+        --accent-dark: #105143;
+        --positive: #13795b;
+        --negative: #ad4d42;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: linear-gradient(135deg, #edf4f1 0%, var(--page) 45%, #f8f4ee 100%);
+      }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 24px 24px 10px;
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .name { color: var(--accent); font-weight: 750; }
+
+      main { max-width: 960px; margin: 0 auto; padding: 34px 24px 56px; }
+
+      .intro { max-width: 650px; margin-bottom: 28px; }
+      .eyebrow { color: var(--accent); font-weight: 750; font-size: 0.85rem; }
+      h1 { font-size: clamp(2rem, 5vw, 3.5rem); letter-spacing: -0.055em; line-height: 1; margin: 10px 0 14px; }
+      .intro p { color: var(--muted); line-height: 1.55; margin: 0; }
+
+      .card {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(219, 226, 236, 0.9);
+        border-radius: 20px;
+        box-shadow: 0 18px 48px rgba(32, 51, 77, 0.08);
+        padding: clamp(22px, 4vw, 36px);
+      }
+
+      form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+      .field { display: grid; gap: 8px; }
+      .wide { grid-column: 1 / -1; }
+      label { font-size: 0.9rem; font-weight: 700; }
+      input, select {
+        width: 100%;
+        appearance: none;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 13px;
+        color: var(--ink);
+        font: inherit;
+        background: var(--surface);
+      }
+      input:focus, select:focus { outline: 3px solid rgba(23, 107, 89, 0.16); border-color: var(--accent); }
+
+      button {
+        grid-column: 1 / -1;
+        border: 0;
+        border-radius: 10px;
+        padding: 14px 18px;
+        cursor: pointer;
+        color: white;
+        font: inherit;
+        font-weight: 750;
+        background: var(--accent);
+        transition: transform 150ms ease, background 150ms ease;
+      }
+      button:hover { background: var(--accent-dark); transform: translateY(-1px); }
+      button:disabled { cursor: wait; opacity: 0.7; transform: none; }
+
+      #result {
+        display: none;
+        margin-top: 22px;
+        padding: 20px;
+        border-radius: 13px;
+        background: #eff8f4;
+        border-left: 4px solid var(--positive);
+      }
+      #result.error { background: #fff4f2; border-left-color: var(--negative); }
+      #result.negative { background: #fff4f2; border-left-color: var(--negative); }
+      #result h2 { font-size: 1rem; margin: 0 0 6px; }
+      #result p { color: var(--muted); margin: 0; }
+      .probability { color: var(--ink); font-size: 1.8rem; font-weight: 800; letter-spacing: -0.04em; }
+
+      @media (max-width: 600px) {
+        header { padding-top: 18px; }
+        main { padding-top: 24px; }
+        form { grid-template-columns: 1fr; }
+        .wide, button { grid-column: auto; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="name">Fabricio Banda A00839916</span>
+      <span>DSCD-2 · Regresión logística</span>
+    </header>
+
+    <main>
+      <section class="intro">
+        <div class="eyebrow">Bank Marketing Predictor</div>
+        <h1>Estima la propensión de contratación.</h1>
+        <p>Captura los datos del cliente para estimar su probabilidad de contratar un depósito a plazo.</p>
+      </section>
+
+      <section class="card" aria-label="Formulario de predicción">
+        <form id="prediction-form">
+          <div class="field">
+            <label for="age">Edad</label>
+            <input id="age" name="age" type="number" min="18" max="100" value="41" required />
+          </div>
+          <div class="field">
+            <label for="balance">Balance anual promedio</label>
+            <input id="balance" name="balance" type="number" min="0" step="0.01" value="3200" required />
+          </div>
+          <div class="field">
+            <label for="job">Ocupación</label>
+            <select id="job" name="job" required>
+              <option value="admin.">Administrativo</option><option value="blue-collar">Obrero</option><option value="entrepreneur">Emprendedor</option><option value="housemaid">Hogar</option><option value="management">Gerencia</option><option value="retired">Jubilado</option><option value="self-employed">Autoempleado</option><option value="services">Servicios</option><option value="student">Estudiante</option><option value="technician" selected>Técnico</option><option value="unemployed">Desempleado</option><option value="unknown">Desconocido</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="marital">Estado civil</label>
+            <select id="marital" name="marital" required><option value="single">Soltero</option><option value="married" selected>Casado</option><option value="divorced">Divorciado</option></select>
+          </div>
+          <div class="field">
+            <label for="education">Nivel educativo</label>
+            <select id="education" name="education" required><option value="primary">Primaria</option><option value="secondary" selected>Secundaria</option><option value="tertiary">Terciaria</option><option value="unknown">Desconocido</option></select>
+          </div>
+          <div class="field">
+            <label for="campaign">Contactos en campaña</label>
+            <input id="campaign" name="campaign" type="number" min="1" value="2" required />
+          </div>
+          <div class="field">
+            <label for="housing">Crédito hipotecario</label>
+            <select id="housing" name="housing" required><option value="no">No</option><option value="yes" selected>Sí</option></select>
+          </div>
+          <div class="field">
+            <label for="loan">Préstamo personal</label>
+            <select id="loan" name="loan" required><option value="no" selected>No</option><option value="yes">Sí</option></select>
+          </div>
+          <button type="submit">Estimar propensión</button>
+        </form>
+
+        <section id="result" aria-live="polite"></section>
+      </section>
+    </main>
+
+    <script>
+      const form = document.querySelector("#prediction-form");
+      const result = document.querySelector("#result");
+      const button = form.querySelector("button");
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const values = Object.fromEntries(new FormData(form));
+        const payload = {
+          ...values,
+          age: Number(values.age),
+          balance: Number(values.balance),
+          campaign: Number(values.campaign),
+        };
+
+        button.disabled = true;
+        button.textContent = "Calculando…";
+        result.style.display = "none";
+
+        try {
+          const response = await fetch("/predict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error("Revisa los datos ingresados e inténtalo de nuevo.");
+          }
+
+          const percent = (data.probability * 100).toFixed(1);
+          result.className = data.prediction === "yes" ? "" : "negative";
+          result.innerHTML = `<h2>${data.message}</h2><div class="probability">${percent}%</div><p>Probabilidad estimada de contratación · Predicción: ${data.prediction}</p>`;
+        } catch (error) {
+          result.className = "error";
+          result.innerHTML = `<h2>No fue posible realizar la estimación</h2><p>${error.message}</p>`;
+        } finally {
+          result.style.display = "block";
+          button.disabled = false;
+          button.textContent = "Estimar propensión";
+        }
+      });
+    </script>
+  </body>
+</html>
