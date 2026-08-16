@@ -127,29 +127,48 @@ La API responde con el estado `422 Unprocessable Entity`. También ocurre si se 
 
 ## Evidencia de funcionamiento
 
-- Caso válido: en `/docs` se puede enviar la solicitud anterior y recibir una predicción y una probabilidad.
-- Caso con error: en `/docs` se puede cambiar `age` por `-10` o por `"hola"` y se obtiene una respuesta `422`.
-- Frontend: al abrir `/frontend`, llenar el formulario y presionar **Estimar propensión**, la interfaz envía una solicitud real a `/predict` y muestra la respuesta recibida.
+- Caso válido:
+  
 
-Para la entrega se pueden agregar capturas de estos tres casos en esta sección.
+https://github.com/user-attachments/assets/84fe92f4-3bc2-4ef1-b4c8-f20384dc7dd9
+
+
+- Caso con error (`age` = `-10`) y `campaign` = `0` :
+  
+
+https://github.com/user-attachments/assets/3cd8fb66-c285-48cb-b546-40a869c646fe
+
+
+
+
+- Frontend: La interfaz envía una solicitud real a `/predict` y muestra la respuesta recibida.
+
+
+
+
+
+https://github.com/user-attachments/assets/7ffe732d-1294-4b55-97bb-d863f444b565
+
+
+
 
 ## Preguntas de la actividad
 
 ### 1. ¿Por qué el modelo se entrena fuera de la API y no dentro de `/predict`?
 
-El entrenamiento puede tardar y no debe repetirse cada vez que un usuario pide una predicción. Por eso se entrena una vez, se guarda el pipeline en un archivo `.joblib` y la API solamente lo carga para usarlo.
+El entrenamiento puede tardar y no debe repetirse cada vez que un usuario pide una predicción por eso se entrena una vez, se guarda el pipeline en un archivo `.joblib` y la API solamente lo carga para usarlo
 
 ### 2. ¿Por qué es importante usar el mismo preprocesamiento en entrenamiento e inferencia?
 
-El modelo aprendió usando datos escalados y variables categóricas convertidas a números. Si en inferencia se hiciera un proceso distinto, las entradas no tendrían el mismo formato y la predicción sería incorrecta o podría fallar. El pipeline evita esa diferencia.
+Es importante ya que el modelo aprendió usando datos escalados y variables convertidas a números, si en inferencia se hiciera un proceso distinto, las entradas no tendrían el mismo formato y la predicción sería incorrecta o podría fallar, por eso se crea un pipeline que justo evita esa diferencia
 
 ### 3. ¿Qué diferencia existe entre `predict()` y `predict_proba()`?
 
-`predict()` devuelve la clase final, en este caso `yes` o `no`. `predict_proba()` devuelve la probabilidad estimada de cada clase. En este proyecto se obtiene específicamente la probabilidad de `yes`.
+`predict()` devuelve la clase final, en este caso `yes` o `no`. `predict_proba()` devuelve la probabilidad estimada de cada clase. En este proyecto se obtiene específicamente la probabilidad de `yes`
 
 ### 4. Si el modelo devuelve una probabilidad de 0.72, ¿qué significa y qué no significa?
 
-Significa que, según los patrones aprendidos por el modelo, el cliente tiene una probabilidad estimada de 72% de contratar. No significa que sea una certeza ni que el cliente definitivamente vaya a contratar.
+Significa que segun los patrones aprendidos por el modelo, el cliente tiene una probabilidad estimada de 72% de contratar, no significa que sea 100% cierto ni que el cliente vaya a contratar
 
 ### 5. ¿Por qué `duration` no se debería usar antes de contactar al cliente?
 
@@ -157,4 +176,4 @@ Porque `duration` representa la duración de la llamada y solo se conoce cuando 
 
 ### 6. ¿Qué ocurriría si mañana cambia la estructura de los datos enviados por el frontend?
 
-La validación de `PredictionRequest` detectaría datos faltantes, tipos incorrectos o valores no permitidos y la API respondería con un error controlado. Después habría que actualizar el frontend y, si cambian las variables del modelo, también entrenar y guardar una nueva versión del pipeline.
+La validación de `PredictionRequest` detectaría datos faltantes, tipos incorrectos o valores no permitidos y la API respondería con un error controlado. Después habría que actualizar el frontend y si cambian las variables del modelo, también entrenar y guardar una nueva versión del pipeline.
